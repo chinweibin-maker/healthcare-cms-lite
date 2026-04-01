@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医疗档案管理中心 - HMS Lite</title>
+    <style>
+        :root { --med-blue: #0056b3; --med-green: #28a745; --med-gray: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e9ecef; margin: 0; padding: 20px; }
+        .dashboard-container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--med-blue); padding-bottom: 15px; margin-bottom: 20px; }
+        .search-bar { background: var(--med-gray); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .patient-card { border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+        .patient-card:hover { border-color: var(--med-blue); background: #f0f7ff; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .status-encrypted { background: #d4edda; color: #155724; }
+        .status-warning { background: #fff3cd; color: #856404; }
+        .btn-add { background: var(--med-blue); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .modal { background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 400px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <h2 style="color:var(--med-blue); margin:0;">🏥 医疗档案管理中心 v1.0</h2>
+        <button class="btn-add" onclick="toggleModal(true)">+ 新增病患档案</button>
+    </div>
+
+    <div class="search-bar">
+        🔍 <input type="text" id="searchInput" placeholder="按姓名或病患 ID 搜索..." onkeyup="filterPatients()">
+    </div>
+
+    <div id="patientList">
+        </div>
+</div>
+
+<div class="modal" id="addModal">
+    <div class="modal-content">
+        <h3>新增医疗记录</h3>
+        <input type="text" id="pID" placeholder="病患 ID (如: P001)">
+        <input type="text" id="pName" placeholder="病患姓名">
+        <input type="text" id="pDiagnosis" placeholder="初步诊断结果">
+        <button onclick="addPatient()" style="width:100%; margin-top:10px;">存入加密系统</button>
+        <button onclick="toggleModal(false)" style="width:100%; margin-top:5px; background:#666;">取消</button>
+    </div>
+</div>
+
+<script>
+    // 模拟初始数据库
+    let patients = JSON.parse(localStorage.getItem('medRecords')) || [
+        {id: "P-1024", name: "张小明", diagnosis: "普通感冒", status: "encrypted"},
+        {id: "P-2048", name: "Sarah Tan", diagnosis: "轻微过敏", status: "encrypted"}
+    ];
+
+    function renderPatients(data = patients) {
+        const list = document.getElementById('patientList');
+        list.innerHTML = data.map(p => `
+            <div class="patient-card">
+                <div>
+                    <strong style="color:var(--med-blue);">${p.id}</strong> - 
+                    <span style="font-size:18px;">${p.name}</span>
+                    <div style="color:#666; font-size:14px; margin-top:5px;">诊断: ${p.diagnosis}</div>
+                </div>
+                <div>
+                    <span class="status-badge status-encrypted">🔒 已加密存储</span>
+                </div>
+            </div>
+        `).join('');
+        localStorage.setItem('medRecords', JSON.stringify(patients));
+    }
+
+    function filterPatients() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = patients.filter(p => 
+            p.name.toLowerCase().includes(query) || p.id.toLowerCase().includes(query)
+        );
+        renderPatients(filtered);
+    }
+
+    function toggleModal(show) {
+        document.getElementById('addModal').style.display = show ? 'flex' : 'none';
+    }
+
+    function addPatient() {
+        const id = document.getElementById('pID').value;
+        const name = document.getElementById('pName').value;
+        const diagnosis = document.getElementById('pDiagnosis').value;
+
+        if(id && name && diagnosis) {
+            patients.push({ id, name, diagnosis, status: "encrypted" });
+            renderPatients();
+            toggleModal(false);
+            // 清空输入框
+            document.getElementById('pID').value = '';
+            document.getElementById('pName').value = '';
+            document.getElementById('pDiagnosis').value = '';
+        }
+    }
+
+    // 初始化加载
+    window.onload = () => renderPatients();
+</script>
+
+</body>
+</html>
